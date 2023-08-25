@@ -30,7 +30,7 @@
             then-layer = <3>;
         };
     };
-  {
+  
     combos {
         compatible = "zmk,combos";
         combo_Z {
@@ -44,8 +44,6 @@
             bindings = <&kp Q>;
         };
     };
-  };
-
 
     keymap {
         compatible = "zmk,keymap";
