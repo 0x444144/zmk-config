@@ -36,16 +36,16 @@
         default_layer {
             bindings = <
         //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
-        //│  Q       │  W       │  E       │  R       │  T       │   │  Y       │  U       │  I       │  O       │  P       │
-            &kp Q      &kp W      &kp E      &kp R      &kp T          &kp Y      &kp U      &kp I      &kp O      &kp P
+        //│  X       │  W       │  M       │  G       │  J       │   │  \       │  .       │  /       │  '       │  `       │
+            &kp X      &kp W      &kp M      &kp G      &kp J          &kp BSLH   &kp DOT    &kp FSLH   &kp SQT    &kp GRAVE
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
-        //│  A       │  S       │  D       │  F       │  G       │   │  H       │  J       │  K       │  L       │ ' "      │
-            HRML(A,        S,         D,         F)     &kp G          &kp H      HRMR(J,        K,         L,        SQT)
+        //│  S       │  C       │  N       │  T       │  K       │   │  ,       │  A       │  E       │  I       │   H      │
+            HRML(S,        C,         N,         T)     &kp K          &kp COMMA  HRMR(A,         E,        I,       H      )
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
-        //│  Z       │  X       │  C       │  V       │  B       │   │  N       │  M       │ , <      │ . >      │ / ?      │
-            &kp Z      &kp X      &kp C      &kp V      &kp B          &kp N      &kp M      &kp COMMA  &kp DOT    &kp FSLH
+        //│  F       │  P       │  L       │  D       │  V       │   │  -       │  U       │  O       │    Y     │   B      │
+            &kp F      &kp P      &kp L      &kp D      &kp V          &kp MINUS  &kp U      &kp O        &kp Y      &kp B
         //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
-                                            &lt 2 BSPC  &lt 2 ENTER    &lt 1 SPACE &lt 1 TAB
+                                            &lt 2 BSPC  &lt 2 R        &lt 1 SPACE &lt 1 TAB
         //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
             >;
         };
