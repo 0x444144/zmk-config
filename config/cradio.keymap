@@ -8,6 +8,21 @@
 // Home row mods macro
 #define HRML(k1,k2,k3,k4) &ht LGUI k1  &ht LALT k2  &ht LCTRL k3  &ht LSHFT k4
 #define HRMR(k1,k2,k3,k4) &ht RSHFT k1  &ht RCTRL k2  &ht RALT k3  &ht RGUI k4
+/ {
+    combos {
+        compatible = "zmk,combos";
+        combo_Z {
+            timeout-ms = <50>;
+            key-positions = <X W>;
+            bindings = <&kp Z>;
+        };
+        combo_Q {
+            timeout-ms = <50>;
+            key-positions = <W M>;
+            bindings = <&kp Q>;
+        };
+    };
+};
 
 / {
     behaviors {
@@ -40,7 +55,7 @@
             &kp X      &kp W      &kp M      &kp G      &kp J          &kp BSLH   &kp DOT    &kp FSLH   &kp SQT    &kp GRAVE
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
         //│  S       │  C       │  N       │  T       │  K       │   │  ,       │  A       │  E       │  I       │   H      │
-            HRML(S,        C,         N,         T)     &kp K          &kp COMMA  HRMR(A,         E,        I,       H      )
+            HRML(S,     C,         N,         T)     &kp K          &kp COMMA  HRMR(A,         E,        I,          H)
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
         //│  F       │  P       │  L       │  D       │  V       │   │  -       │  U       │  O       │    Y     │   B      │
             &kp F      &kp P      &kp L      &kp D      &kp V          &kp MINUS  &kp U      &kp O        &kp Y      &kp B
