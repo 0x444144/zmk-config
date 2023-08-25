@@ -37,7 +37,7 @@
             bindings = <
         //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
         //│  Q       │  W       │  E       │  R       │  T       │   │  Y       │  U       │  I       │  O       │  P       │
-            &kp X      &kp W      &kp M      &kp G      &kp J          &kp BLSH      &kp DOT      &kp FSLH      &kp FSLH      &kp SQT
+            &kp X      &kp W      &kp M      &kp G      &kp J       &kp BLSH      &kp DOT      &kp FSLH      &kp PLUS      &kp SQT
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
         //│  A       │  S       │  D       │  F       │  G       │   │  H       │  J       │  K       │  L       │ ' "      │
             HRML(S,        C,         N,         T)     &kp K          &kp COMMA      HRMR(A,        E,         I,        H)
