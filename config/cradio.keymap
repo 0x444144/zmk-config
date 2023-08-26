@@ -28,18 +28,12 @@
         COMBO(copy, &kp LG(C), 11 12)
         COMBO(paste, &kp LG(V), 21 22)
         COMBO(undo, &kp LG(Z), 20 21) 
-
-
         COMBO(backslash, &kp BSLH, 28 29)
 
         COMBO(esckey, &kp ESC, 2 3)
         COMBO(tabkey, &kp TAB, 12 13)
         COMBO(space, &kp SPACE, 22 23)
         COMBO(enter, &kp RET, 21 23)
-        
-        COMBO(minus, &kp MINUS, 20 21)
-        COMBO(under, &kp UNDER, 21 22)
-        COMBO(tilde, &kp TILDE, 22 23)
         
         COMBO(one, &kp N1, 0 10)
         COMBO(two, &kp N2, 1 11)
@@ -51,7 +45,8 @@
         COMBO(eight, &kp N8, 7 17)
         COMBO(nine, &kp N9, 8 18)
         COMBO(zero, &kp N0, 9 19)
-        };
+    };
+
     behaviors {
         ht: hold_tap {
             label = "hold_tap";
