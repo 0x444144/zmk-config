@@ -39,6 +39,7 @@
         
         COMBO(minus, &kp MINUS, 20 21)
         COMBO(under, &kp UNDER, 21 22)
+        COMBO(tilde, &kp TILDE, 22 23)
         
         COMBO(one, &kp N1, 0 10)
         COMBO(two, &kp N2, 1 11)
@@ -99,11 +100,11 @@
         //│ INSERT   │  1       │  2       │  3       │          │   │ HOME     │ PAGE DN  │ PAGE UP  │ END      │  :       │
             &kp INS    &kp N1     &kp N2     &kp N3     &trans         &kp HOME   &kp PG_DN  &kp PG_UP  &kp END    &kp COLON
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
-        //│ DEL      │  4       │  5       │  6       │          │   │ LEFT     │ DOWN     │ UP       │ RIGHT    │  ;       │
-            &kp DEL    &kp N4     &kp N5     &kp N6     &trans         &kp LARW   &kp DARW   &kp UARW   &kp RARW   &kp SEMI
+        //│ ESC      │  4       │  5       │  6       │          │   │ LEFT     │ DOWN     │ UP       │ RIGHT    │  ;       │
+            &kp ESC    &kp N4     &kp N5     &kp N6     &trans         &kp LARW   &kp DARW   &kp UARW   &kp RARW   &kp SEMI
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
-        //│ CAPS     │  7       │  8       │  9       │  0       │   │ VOL_D    │ PREV_T   │ PLAY     │ NEXT_T   │ VOL_U    │
-           &caps_word  &kp N7     &kp N8     &kp N9     &kp N0         &C_VOL_DN  &C_PREV    &C_PP      &C_NEXT    &C_VOL_UP
+        //│ CAPS     │  7       │  8       │  9       │  0       │   │          │          │          │          │          │
+           &caps_word  &kp N7     &kp N8     &kp N9     &kp N0         &trans     &trans     &trans     &trans     &trans
         //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
                                              &trans     &kp ESC        &trans     &trans
         //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
