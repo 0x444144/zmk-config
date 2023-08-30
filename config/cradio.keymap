@@ -109,14 +109,14 @@
         left_layer {
             bindings = <
         //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
-        //│          │  [       │  {       │  }       │          │   │  ^       │  (       │  )       │  ]       │  ~       │
-            &trans     &kp LBKT   &kp LBRC   &kp RBRC   &trans         &kp CARET  &kp LPAR   &kp RPAR   &kp RBKT   &kp TILDE
+        //│ VOLDN    │  [       │  {       │  }       │  VOLUP   │   │  ^       │  (       │  )       │  ]       │  ~       │
+            &kp C_VOL_DN &kp LBKT  &kp LBRC  &kp RBRC   &kp C_VOL_UP   &kp CARET  &kp LPAR   &kp RPAR   &kp RBKT   &kp TILDE
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
         //│  !       │  @       │  #       │  $       │  %       │   │  *       │  -       │  =       │  \       │  `       │
             &kp EXCL   &kp AT     &kp HASH   &kp DLLR   &kp PRCNT      &kp ASTRK  &kp MINUS  &kp EQUAL  &kp BSLH   &kp GRAVE
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
         //│          │          │          │          │          │   │  &       │  _       │  +       │  │       │          │
-            &trans     &trans     &trans     &trans     &trans         &kp AMPS   &kp UNDER  &kp PLUS   &kp PIPE   &trans
+         &kp C_PP &kp C_PREV &kp C_NEXT &kp C_AC_SCROLL_DOWN &kp C_AC_SCROLL_DOWN &kp AMPS   &kp UNDER  &kp PLUS   &kp PIPE   &trans
         //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
                                              &trans     &trans         &trans     &trans
         //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
