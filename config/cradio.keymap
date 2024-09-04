@@ -47,14 +47,14 @@
         COMBO(nine, &kp N9, 8 18)
         COMBO(zero, &kp N0, 9 19)
 
-        COMBO(ctrlL, &kp LC(LEFT), 10 11)
-        COMBO(ctrlR, &kp LC(RIGHT), 11 12)
-        COMBO(ctrl1, &kp LC(N1), 4 5)
-        COMBO(ctrl2, &kp LC(N2), 14 15)
-        COMBO(ctrl3, &kp LC(N3), 24 25)
-        COMBO(ctrl4, &kp LC(N4), 6 7)
-        COMBO(ctrl5, &kp LC(N5), 16 17)
-        COMBO(ctrl6, &kp LC(N6), 26 27)
+        // COMBO(ctrlL, &kp LC(LEFT), 10 11)
+        // COMBO(ctrlR, &kp LC(RIGHT), 11 12)
+        // COMBO(ctrl1, &kp LC(N1), 4 5)
+        // COMBO(ctrl2, &kp LC(N2), 14 15)
+        // COMBO(ctrl3, &kp LC(N3), 24 25)
+        // COMBO(ctrl4, &kp LC(N4), 6 7)
+        // COMBO(ctrl5, &kp LC(N5), 16 17)
+        // COMBO(ctrl6, &kp LC(N6), 26 27)
 
     };
 
