@@ -1,0 +1,4 @@
+# local build env (see DEV.md)
+/.build/
+/firmware/
+/.direnv/

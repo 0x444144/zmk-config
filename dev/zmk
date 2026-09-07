@@ -1,0 +1,203 @@
+#!/usr/bin/env bash
+# Local ZMK build driver. Runs the official zmk-build-arm container so the
+# toolchain matches CI exactly; NixOS just supplies docker + the helpers.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+BUILD="$ROOT/.build"
+WS="$BUILD/ws"
+OUT="$BUILD/out"
+FW="$ROOT/firmware"
+
+IMAGE="${ZMK_IMAGE:-zmkfirmware/zmk-build-arm:stable}"
+BOARD="${ZMK_BOARD:-nice_nano_v2}"
+SHIELD="${ZMK_SHIELD:-cradio}"
+
+# Toolchain env is not baked into the image; resolve the SDK at run time so an
+# image bump doesn't break us.
+PRELUDE='export ZEPHYR_TOOLCHAIN_VARIANT=zephyr;
+export ZEPHYR_SDK_INSTALL_DIR="$(ls -d /opt/zephyr-sdk-* | head -1)";
+export ZEPHYR_BASE=/build/ws/zephyr;'
+
+die() { printf '\033[31merror:\033[0m %s\n' "$*" >&2; exit 1; }
+say() { printf '\033[36m==>\033[0m %s\n' "$*"; }
+
+# The ZMK revision is whatever config/west.yml pins, so the local build and the
+# GitHub Actions build always agree.
+zmk_rev() {
+  awk '/name: *zmk$/{f=1} f && /revision:/{print $2; exit}' "$ROOT/config/west.yml"
+}
+
+sides() {
+  case "${1:-both}" in
+    left|right) echo "$1" ;;
+    both|all|"") echo "left right" ;;
+    *) die "unknown side '$1' (want: left, right, both)" ;;
+  esac
+}
+
+# $1 = shell snippet to run inside the container.
+in_docker() {
+  local tty=()
+  [[ -t 0 && -t 1 ]] && tty=(-it)
+  docker run --rm "${tty[@]}" \
+    --user "$(id -u):$(id -g)" \
+    -v "$ROOT:/config:ro" \
+    -v "$BUILD:/build" \
+    -e HOME=/build/home \
+    -w /build/ws \
+    "$IMAGE" bash -c "$PRELUDE $1"
+}
+
+need_ws() {
+  [[ -d "$WS/zmk/app" ]] || die "no west workspace yet -- run 'zmk init' first"
+}
+
+cmd_init() {
+  command -v docker >/dev/null || die "docker not found on PATH"
+  docker info >/dev/null 2>&1 || die "cannot talk to the docker daemon (is it running, and are you in the 'docker' group?)"
+
+  local rev; rev="$(zmk_rev)"
+  [[ -n "$rev" ]] || die "could not read the zmk revision from config/west.yml"
+
+  mkdir -p "$WS" "$BUILD/home" "$OUT"
+
+  if [[ -d "$WS/.west" ]]; then
+    say "workspace exists, updating to zmk $rev"
+    in_docker "west update && west zephyr-export"
+  else
+    say "pulling build image ($IMAGE)"
+    docker pull -q "$IMAGE"
+    say "initializing west workspace at zmk $rev (this clones ~3.5G, once)"
+    in_docker "west init -m https://github.com/zmkfirmware/zmk --mr '$rev' --mf app/west.yml /build/ws \
+               && west update && west zephyr-export"
+  fi
+  say "ready -- now run 'zmk build'"
+}
+
+cmd_build() {
+  need_ws
+  [[ -d "$BUILD/home/.cmake/packages/Zephyr" ]] || in_docker "west zephyr-export"
+  local pristine=""
+  [[ "${ZMK_PRISTINE:-0}" == 1 ]] && pristine="-p always"
+
+  mkdir -p "$FW"
+  for side in $(sides "${1:-both}"); do
+    say "building ${SHIELD}_${side} for $BOARD"
+    in_docker "west build $pristine -s /build/ws/zmk/app -b '$BOARD' -d /build/out/$side -- \
+                 -DSHIELD=${SHIELD}_${side} \
+                 -DZMK_CONFIG=/config/config \
+                 -DZMK_EXTRA_MODULES=/config"
+    cp "$OUT/$side/zephyr/zmk.uf2" "$FW/${SHIELD}_${side}.uf2"
+    say "-> firmware/${SHIELD}_${side}.uf2 ($(du -h "$FW/${SHIELD}_${side}.uf2" | cut -f1))"
+  done
+}
+
+# nice!nano v2 exposes a UF2 mass-storage volume after a double-tap of reset.
+# Match on either the filesystem label or the SCSI model ("Adafruit nRF UF2"),
+# since an unmounted whole-disk volume does not always surface a label.
+nicenano_line() {
+  lsblk -o PATH,LABEL,MODEL,MOUNTPOINT -nrP 2>/dev/null \
+    | grep -E 'LABEL="NICENANO"|MODEL="[^"]*UF2[^"]*"' | head -1
+}
+
+# $1 = field name, $2 = an lsblk -P line
+field() { sed -n "s/.*$1=\"\([^\"]*\)\".*/\1/p" <<<"$2"; }
+
+cmd_flash() {
+  local side="${1:-}"
+  [[ "$side" == left || "$side" == right ]] || die "usage: zmk flash <left|right>"
+  local uf2="$FW/${SHIELD}_${side}.uf2"
+  [[ -f "$uf2" ]] || die "$uf2 not built yet -- run 'zmk build $side'"
+
+  # The Adafruit bootloader drops back to the firmware after ~40s, so prompt
+  # only once we are already polling.
+  say "double-tap reset on the $side half now (bootloader stays up ~40s)..."
+
+  local line dev mnt i
+  for ((i = 0; i < 240; i++)); do
+    line="$(nicenano_line)"
+    if [[ -n "$line" ]]; then
+      mnt="$(field MOUNTPOINT "$line")"
+      [[ -n "$mnt" ]] && break
+      dev="$(field PATH "$line")"
+      if [[ -n "$dev" ]] && command -v udisksctl >/dev/null; then
+        mnt="$(udisksctl mount -b "$dev" 2>/dev/null | sed -n 's/.* at \(.*\)\.$/\1/p')"
+        [[ -n "$mnt" ]] && break
+      fi
+    fi
+    sleep 0.5
+  done
+  [[ -n "${mnt:-}" ]] || die "no UF2 volume appeared -- double-tap again, and note the ~40s window"
+
+  say "flashing $side -> $mnt"
+  cp "$uf2" "$mnt/" && sync
+  say "done -- the board reboots and unmounts on its own"
+}
+
+cmd_draw() {
+  command -v keymap >/dev/null || die "keymap-drawer not on PATH (are you in the nix devShell?)"
+  mkdir -p "$ROOT/.build"
+  keymap parse -z "$ROOT/config/${SHIELD}.keymap" > "$BUILD/keymap.yaml"
+  keymap draw "$BUILD/keymap.yaml" > "$BUILD/keymap.svg"
+  say "-> .build/keymap.svg"
+}
+
+cmd_verify() {
+  local side="${1:-}" current="${2:-}"
+  [[ "$side" == left || "$side" == right ]] || die "usage: zmk verify <left|right> [path/to/CURRENT.UF2]"
+  local uf2="$FW/${SHIELD}_${side}.uf2"
+  [[ -f "$uf2" ]] || die "$uf2 not built -- run 'zmk build $side'"
+
+  # The bootloader exposes CURRENT.UF2, a readback of the flashed application.
+  if [[ -z "$current" ]]; then
+    local line
+    line="$(nicenano_line)"
+    [[ -n "$line" ]] || die "no UF2 volume found -- double-tap reset, mount it, and pass the path"
+    local mnt; mnt="$(field MOUNTPOINT "$line")"
+    [[ -n "$mnt" ]] || die "volume is not mounted -- mount it and pass the path to CURRENT.UF2"
+    current="$mnt/CURRENT.UF2"
+  fi
+  [[ -f "$current" ]] || die "$current not found"
+
+  python3 "$ROOT/dev/uf2cmp.py" "$uf2" "$current"
+}
+
+cmd_shell() { need_ws; in_docker "exec bash"; }
+
+cmd_clean() { say "removing build output (keeping the west workspace)"; rm -rf "$OUT"; }
+
+cmd_nuke() {
+  say "removing .build entirely (next 'zmk init' re-clones ~1.5G)"
+  rm -rf "$BUILD"
+}
+
+cmd_help() {
+  cat <<EOF
+zmk -- local ZMK firmware builds for $(basename "$ROOT")
+
+  zmk init              one-time: fetch the toolchain image + west workspace
+  zmk build [side]      build left/right/both (default: both) -> firmware/
+  zmk flash <side>      copy the .uf2 onto a double-tap-reset nice!nano
+  zmk draw              render config/${SHIELD}.keymap to .build/keymap.svg
+  zmk verify <side> [p] compare the board's CURRENT.UF2 against your build
+  zmk shell             interactive shell inside the build container
+  zmk clean             drop build output, keep the cloned workspace
+  zmk nuke              drop .build entirely
+
+env: ZMK_IMAGE, ZMK_BOARD ($BOARD), ZMK_SHIELD ($SHIELD), ZMK_PRISTINE=1
+EOF
+}
+
+case "${1:-help}" in
+  init)  shift; cmd_init "$@" ;;
+  build) shift; cmd_build "$@" ;;
+  flash) shift; cmd_flash "$@" ;;
+  draw)  shift; cmd_draw "$@" ;;
+  verify) shift; cmd_verify "$@" ;;
+  shell) shift; cmd_shell "$@" ;;
+  clean) shift; cmd_clean "$@" ;;
+  nuke)  shift; cmd_nuke "$@" ;;
+  help|-h|--help) cmd_help ;;
+  *) die "unknown command '$1' (try: zmk help)" ;;
+esac
