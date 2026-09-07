@@ -10,14 +10,27 @@
 #define HRML(k1,k2,k3,k4) &ht LGUI k1  &ht LALT k2  &ht LCTRL k3  &ht LSHFT k4
 #define HRMR(k1,k2,k3,k4) &ht RSHFT k1  &ht RCTRL k2  &ht RALT k3  &ht RGUI k4
 
-// Combo macro
+// Combo macro. LAYERS is a space-separated layer list.
+#define COMBO_ON(NAME, BINDINGS, KEYPOS, LAYERS) \
+  combo_##NAME { \
+    timeout-ms = <50>; \
+    require-prior-idle-ms = <150>; \
+    bindings = <BINDINGS>; \
+    key-positions = <KEYPOS>; \
+    layers = <LAYERS>; \
+  };
+
+// Default: active on the base layer and on the Mac layer, since combos are
+// filtered by the *highest* active layer. Deliberately NOT written as a call
+// to COMBO_ON -- that would let NAME expand (Z and Q are keys.h macros)
+// before ## pastes it, yielding node names like combo_((0x07 << 16) | 0x1D).
 #define COMBO(NAME, BINDINGS, KEYPOS) \
   combo_##NAME { \
     timeout-ms = <50>; \
     require-prior-idle-ms = <150>; \
     bindings = <BINDINGS>; \
     key-positions = <KEYPOS>; \
-    layers = <0>; \
+    layers = <0 4>; \
   };
 
 / {
@@ -29,11 +42,26 @@
 
         COMBO(tmux, &kp LC(B), 11 13)
         COMBO(tmux2, &kp LC(B), 16 18)
-        COMBO(copy, &kp LG(C), 21 22)
-        COMBO(paste, &kp LG(V), 27 28)
-        COMBO(undo, &kp LG(Z), 26 27)
-        COMBO(cut, &kp LG(X), 20 21)
+        // Linux/Windows on the base layer, macOS on layer 4 (&tog 4).
+        COMBO_ON(copy,  &kp LC(C), 21 22, 0)
+        COMBO_ON(paste, &kp LC(V), 27 28, 0)
+        COMBO_ON(undo,  &kp LC(Z), 26 27, 0)
+        COMBO_ON(cut,   &kp LC(X), 20 21, 0)
+        COMBO_ON(copy_mac,  &kp LG(C), 21 22, 4)
+        COMBO_ON(paste_mac, &kp LG(V), 27 28, 4)
+        COMBO_ON(undo_mac,  &kp LG(Z), 26 27, 4)
+        COMBO_ON(cut_mac,   &kp LG(X), 20 21, 4)
         COMBO(backslash, &kp BSLH, 28 29)
+
+        // Backspace nearly always follows a keystroke, so the shared
+        // require-prior-idle-ms would block it right when it is needed.
+        // Skips over O (27), which keeps it hard to roll into by accident.
+        combo_bspc {
+            timeout-ms = <50>;
+            bindings = <&kp BSPC>;
+            key-positions = <26 28>;
+            layers = <0 4>;
+        };
 
         COMBO(esckey, &kp ESC, 2 3)
         COMBO(esckey2, &kp ESC, 6 7)
@@ -109,7 +137,7 @@
         //│  F       │  P       │  L       │  D       │  V       │   │  -       │  U       │  O       │    Y     │   B      │
             &kp F      &kp P      &kp L      &kp D      &kp V          &kp MINUS  &kp U      &kp O        &kp Y      &kp B
         //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
-                                            &lt 2 BSPC  &lt 2 R        &lt 1 SPACE &lt 1 ENTER
+                                          &lt 2 C_VOL_DN &lt 2 R        &lt 1 SPACE &lt 1 C_VOL_UP
         //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
             >;
         };
@@ -123,8 +151,8 @@
         //│ ESC      │  4       │  5       │  6       │          │   │ LEFT     │ DOWN     │ UP       │ RIGHT    │  ;       │
             &kp ESC    &kp N4     &kp N5     &kp N6     &mkp MB1       &kp LARW   &kp DARW   &kp UARW   &kp RARW   &kp SEMI
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
-        //│ CAPS     │  7       │  8       │  9       │  0       │   │ DEL      │          │ MOCK     │          │          │
-           &caps_word  &kp N7     &kp N8     &kp N9     &kp N0         &kp DEL    &trans   &mock_word   &trans     &trans
+        //│ CAPS     │  7       │  8       │  9       │  0       │   │ DEL      │          │          │          │          │
+           &caps_word  &kp N7     &kp N8     &kp N9     &kp N0         &kp DEL    &trans     &trans     &trans     &trans
         //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
                                              &trans     &kp ESC        &trans     &trans
         //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
@@ -151,19 +179,29 @@
         tri_layer {
             bindings = <
         //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
-        //│ RESET    │          │          │          │PROFILE 0 │   │  F1      │  F2      │  F3      │  F4      │  RESET   │
-           &sys_reset  &trans     &trans     &trans    &bt BT_SEL 0    &kp F1     &kp F2     &kp F3     &kp F4    &sys_reset
+        //│ RESET    │          │  MOCK    │          │PROFILE 0 │   │  F1      │  F2      │  F3      │  F4      │  RESET   │
+           &sys_reset  &trans    &mock_word   &trans    &bt BT_SEL 0    &kp F1     &kp F2     &kp F3     &kp F4    &sys_reset
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
         //│BOOTLOADER│          │          │          │PROFILE 1 │   │  F5      │  F6      │  F7      │  F8      │BOOTLOADER│
           &bootloader  &trans     &trans     &trans    &bt BT_SEL 1    &kp F5     &kp F6     &kp F7     &kp F8    &bootloader
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
-        //│          │          │          │ CLEAR BT │PROFILE 2 │   │  F9      │  F10     │  F11     │  F12     │          │
-            &trans     &trans     &trans    &bt BT_CLR &bt BT_SEL 2    &kp F9     &kp F10    &kp F11    &kp F12    &trans
+        //│          │          │ MAC MODE │ CLEAR BT │PROFILE 2 │   │  F9      │  F10     │  F11     │  F12     │          │
+            &trans     &trans     &tog 4    &bt BT_CLR &bt BT_SEL 2    &kp F9     &kp F10    &kp F11    &kp F12    &trans
         //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
                                              &trans     &trans         &trans     &trans
         //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
             >;
         };
+
+        // Transparent throughout -- it exists purely to select the macOS
+        // clipboard combos above. Toggle with &tog 4 on the tri-layer.
+        mac_layer {
+            bindings = <
+            &trans     &trans     &trans     &trans     &trans         &trans     &trans     &trans     &trans     &trans
+            &trans     &trans     &trans     &trans     &trans         &trans     &trans     &trans     &trans     &trans
+            &trans     &trans     &trans     &trans     &trans         &trans     &trans     &trans     &trans     &trans
+                                              &trans     &trans         &trans     &trans
+            >;
+        };
     };
 };
-
